@@ -3,6 +3,7 @@ import json
 import boto3
 import requests
 import credentials
+from pyspark.sql import SparkSession
 from botocore.exceptions import ClientError
 
 # extract jsons from api
@@ -57,6 +58,12 @@ def write_to_s3(conn, bucket_name):
 
 
 if __name__ == '__main__':
+    spark = SparkSession \
+        .builder \
+        .appName('DEevaluation') \
+        .getOrCreate()
+
+
     # get s3 credentials
     access_key = credentials.access_key
     secret_key = credentials.secret_key
@@ -73,7 +80,7 @@ if __name__ == '__main__':
     # connect to s3
     bucket = credentials.bucket
     s3_conn = s3_connection(access_key, secret_key)
-
+    
     # generate jsons into data/ to upload to s3
     with open('data/covid_states.json', 'w') as f:
         json.dump(states, f)
@@ -81,8 +88,15 @@ if __name__ == '__main__':
     with open('data/covid_transactions.json', 'w') as f2:
         json.dump(covid_transactions, f2)
 
+    df1 = spark.read.json('data/covid_states.json', multiLine=True)
+    df1.write.parquet('data/covid_states.parquet')
+
+    df2 = spark.read.json('data/covid_transactions.json', multiLine=True)
+    df2.write.parquet('data/covid_transactions.parquet')
+
     # write to s3 everything into data
     write_to_s3(s3_conn, bucket)
+
 
 
 
