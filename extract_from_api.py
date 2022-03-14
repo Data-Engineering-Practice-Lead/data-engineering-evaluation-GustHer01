@@ -65,7 +65,7 @@ if __name__ == '__main__':
     covid_states = extract_json('https://api.covidtracking.com/v2/states.json')
     covid_states = covid_states['data']
 
-    covid_transactions = extract_json('https://api.covidtracking.com/v1/states/.json')
+    covid_transactions = extract_json('https://api.covidtracking.com/v1/states/current.json')
 
     # get state codes and generate urls for every state
     states = get_state_codes(covid_states)

@@ -1,19 +1,8 @@
 CREATE OR REPLACE TABLE transactions(
-    date string,
+    d string,
     state string,
     positive int,
-    totalTestResults int,
-    hospitalizedCumulative int,
-    death int,
-    hospitalized int,
-    totalTestsViral int,
-    positiveTestsViral int,
-    negativeTestsViral int
-);
-CREATE OR REPLACE TABLE Fact_Covid_transactions(
-    date string,
-    state string,
-    positive int,
+    negative int,
     totalTestResults int,
     hospitalizedCumulative int,
     death int,
@@ -23,12 +12,26 @@ CREATE OR REPLACE TABLE Fact_Covid_transactions(
     negativeTestsViral int
 );
 
+CREATE OR REPLACE TABLE Fact_Covid_transactions(
+    d string,
+    state string,
+    positive int,
+    negative int,
+    totalTestResults int,
+    hospitalizedCumulative int,
+    death int,
+    hospitalized int,
+    totalTestsViral int,
+    positiveTestsViral int,
+    negativeTestsViral int
+);
 
 insert into transactions
     select
         states_json['date'],
         states_json['state'],
         states_json['positive'],
+        states_json['negative'],
         states_json['totalTestResults'],
         states_json['hospitalizedCumulative'],
         states_json['death'],
@@ -38,6 +41,7 @@ insert into transactions
         states_json['negativeTestsViral']
         from
             Stg_covid_transactions;
+
 CREATE OR REPLACE PROCEDURE dimensioning2()
     returns varchar
     language javascript
@@ -55,8 +59,8 @@ CREATE OR REPLACE PROCEDURE dimensioning2()
             update set fact.state = src.state
             when not matched
             then
-            insert(date,state,positive , totalTestResults, hospitalizedCumulative,death,
-                    hospitalized, totalTestsViral, positiveTestsViral, negativeTestsViral ) values(src.date, src.state,src.positive, src.totalTestResults, src.hospitalizedCumulative,src.death,
+            insert(d,state,positive,negative, totalTestResults, hospitalizedCumulative,death,
+                    hospitalized, totalTestsViral, positiveTestsViral, negativeTestsViral ) values(src.d, src.state,src.positive, src.negative, src.totalTestResults, src.hospitalizedCumulative,src.death,
                                                                                                     src.hospitalized, src.totalTestsViral, src.positiveTestsViral, src.negativeTestsViral);
 
         `
