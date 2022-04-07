@@ -7,7 +7,7 @@ import credentials
 import pandas as pd
 from botocore.exceptions import ClientError
 
-
+# extracts json file by link provided
 def extract_json(url):
     response_api = requests.get(url)
     data = response_api.text
@@ -15,7 +15,7 @@ def extract_json(url):
 
     return parse_json
 
-
+# gets states for links requested
 def get_states(states_json):
     st = list()
     tmp_dict = dict()
@@ -32,14 +32,14 @@ def get_states(states_json):
         st.append(tmp_dict)
     return st
 
-
+# generates dates for calendar
 def get_dates(transactions_list):
     start = transactions_list[-1]['date']
     end = transactions_list[0]['date']
 
     return start, end
 
-
+# generates calendar table according to requisites of the project
 def gen_calendar(start_date, end_date):
     calendar = list()
     date = dict()
@@ -52,6 +52,7 @@ def gen_calendar(start_date, end_date):
     return calendar
 
 
+# connection to s3 bucket in aws
 def s3_connection(access, secret):
     # boto3.client
     # boto3.Session
@@ -63,6 +64,7 @@ def s3_connection(access, secret):
     return client_s3
 
 
+# upload to s3
 def write_to_s3(conn, bucket_name):
     data_folder = 'data/'
 
