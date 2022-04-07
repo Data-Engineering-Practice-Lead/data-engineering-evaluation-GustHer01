@@ -1,5 +1,20 @@
 CREATE OR REPLACE TABLE transactions(
-    d string,
+    dates date,
+    state string,
+    positive int,
+    negative int,
+    totalTestResults int,
+    hospitalizedCumulative int,
+    death int,
+    hospitalized int,
+    totalTestsViral int,
+    positiveTestsViral int,
+    negativeTestsViral int,
+    state_id int references covid_states(id_state),
+    date_id int references calendar(id_date)
+);
+CREATE OR REPLACE TABLE Fact_Covid_transactions(
+    dates date,
     state string,
     positive int,
     negative int,
@@ -12,60 +27,27 @@ CREATE OR REPLACE TABLE transactions(
     negativeTestsViral int
 );
 
-CREATE OR REPLACE TABLE Fact_Covid_transactions(
-    d string,
-    state string,
-    positive int,
-    negative int,
-    totalTestResults int,
-    hospitalizedCumulative int,
-    death int,
-    hospitalized int,
-    totalTestsViral int,
-    positiveTestsViral int,
-    negativeTestsViral int
-);
 
 insert into transactions
     select
-        states_json['date'],
-        states_json['state'],
-        states_json['positive'],
-        states_json['negative'],
-        states_json['totalTestResults'],
-        states_json['hospitalizedCumulative'],
-        states_json['death'],
-        states_json['hospitalized'],
-        states_json['totalTestsViral'],
-        states_json['positiveTestsViral'],
-        states_json['negativeTestsViral']
+        t.states_json['date'],
+        t.states_json['state'],
+        t.states_json['positive'],
+        t.states_json['negative'],
+        t.states_json['totalTestResults'],
+        t.states_json['hospitalizedCumulative'],
+        t.states_json['death'],
+        t.states_json['hospitalized'],
+        t.states_json['totalTestsViral'],
+        t.states_json['positiveTestsViral'],
+        t.states_json['negativeTestsViral'],
+        c.id_state,
+        cal.id_date
         from
-            Stg_covid_transactions;
+            Stg_covid_transactions as t
+        join covid_states as c
+            on t.states_json['state'] = c.state_code
+        join calendar as cal
+            on t.states_json['date'] = cal.date;
 
-CREATE OR REPLACE PROCEDURE dimensioning2()
-    returns varchar
-    language javascript
-    as
-    $$
-    snowflake.execute({ sqlText:
-        `
-            merge into Fact_Covid_transactions fact
-            using (select * from transactions) src
-            on fact.state = src.state
-            when matched and (fact.positive != src.positive or fact.totalTestResults != src.totalTestResults or fact.hospitalizedCumulative != src.hospitalizedCumulative
-                               or fact.death != src.death or fact.hospitalized != src.hospitalized or fact.totalTestsViral!= src.totalTestsViral or fact.positiveTestsViral != src.positiveTestsViral
-                               or fact.negativeTestsViral != src.negativeTestsViral)
-            then
-            update set fact.state = src.state
-            when not matched
-            then
-            insert(d,state,positive,negative, totalTestResults, hospitalizedCumulative,death,
-                    hospitalized, totalTestsViral, positiveTestsViral, negativeTestsViral ) values(src.d, src.state,src.positive, src.negative, src.totalTestResults, src.hospitalizedCumulative,src.death,
-                                                                                                    src.hospitalized, src.totalTestsViral, src.positiveTestsViral, src.negativeTestsViral);
-
-        `
-    });
-    return 'Done';
-    $$
-    ;
-call dimensioning2();
+select * from transactions;
